@@ -1,0 +1,15 @@
+export default function manifest() {
+  return {
+    name: 'Raghavendra HearCare Pro',
+    short_name: 'HearCare Pro',
+    description: 'Clinic workspace and patient portal for Raghavendra Speech & Hearing Center',
+    start_url: '/',
+    display: 'standalone',
+    background_color: '#f5f8fb',
+    theme_color: '#123f68',
+    orientation: 'portrait-primary',
+    icons: [
+      { src: '/hearcare-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }
+    ]
+  };
+}
