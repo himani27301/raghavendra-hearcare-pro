@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'web/**'
+      - 'patient-app/**'
       - 'capacitor.config.ts'
       - 'package.json'
       - '.github/workflows/ios-preflight.yml'
@@ -13,9 +13,6 @@ on:
 jobs:
   ios-preflight:
     runs-on: macos-latest
-    env:
-      NEXT_PUBLIC_API_URL: https://raghavendra-hearcare-api.onrender.com/api
-      NEXT_PUBLIC_DEMO_MODE: 'false'
 
     steps:
       - name: Checkout
@@ -29,13 +26,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build web app
-        run: npm run build -w web
-
       - name: Add iOS project
         run: npx cap add ios
 
-      - name: Sync Capacitor
+      - name: Sync patient app
         run: npx cap sync ios
 
       - name: Build iOS simulator app
