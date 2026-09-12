@@ -3,6 +3,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
@@ -24,6 +26,8 @@ if (IS_PROD && !JWT_SECRET) throw new Error('JWT_SECRET is required in productio
 if (IS_PROD && !MONGODB_URI) throw new Error('MONGODB_URI is required in production');
 
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
+app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false }));
 app.use(cors({
   origin(origin, cb) {
     if (!origin || !IS_PROD) return cb(null, true);
@@ -37,6 +41,8 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Pragma', 'no-cache');
   if (IS_PROD) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   next();
 });
@@ -130,6 +136,23 @@ const auth = (req, res, next) => {
 const allow = (...roles) => (req, res, next) => roles.includes(req.user?.role) ? next() : res.status(403).json({ message: 'Not allowed' });
 const staffRoles = ['admin', 'doctor', 'receptionist'];
 
+const staffLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { message: 'Too many sign-in attempts. Try again in a few minutes.' }
+});
+const patientLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { message: 'Too many sign-in attempts. Try again in a few minutes.' }
+});
+
 async function ensureStaff({ name, email, password, role }) {
   if (!email || !password || dbMode !== 'mongodb') return;
   const normalized = email.trim().toLowerCase();
@@ -161,7 +184,7 @@ async function initDb() {
 
 app.get('/api/health', (req, res) => res.json({ ok: true, mode: dbMode === 'mongodb' ? 'mongodb' : 'demo-memory', timezone: TZ, production: IS_PROD }));
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', staffLoginLimiter, async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
   let user;
@@ -188,7 +211,7 @@ app.post('/api/auth/change-password', auth, allow('admin', 'doctor', 'receptioni
   res.json({ ok: true, message: 'Password updated successfully' });
 });
 
-app.post('/api/auth/patient-login', async (req, res) => {
+app.post('/api/auth/patient-login', patientLoginLimiter, async (req, res) => {
   const patientCode = String(req.body.patientCode || '').trim().toUpperCase();
   const phone = digits(req.body.phone);
   if (!patientCode || phone.length < 8) return res.status(400).json({ message: 'Enter your patient ID and registered mobile number' });
