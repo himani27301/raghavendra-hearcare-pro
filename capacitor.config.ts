@@ -3,9 +3,10 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.raghavendra.hearcare',
   appName: 'Raghavendra HearCare',
-  webDir: 'web/out',
+  webDir: 'patient-app',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    iosScheme: 'capacitor'
   }
 };
 
