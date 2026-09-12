@@ -1,0 +1,6 @@
+{
+  "buildCommand": "npm run build -w web",
+  "outputDirectory": "web/out",
+  "installCommand": "npm install",
+  "framework": null
+}
