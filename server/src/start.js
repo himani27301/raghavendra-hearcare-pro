@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-async function syncBootstrapAccounts() {
+async function ensureBootstrapAccounts() {
   if (process.env.BOOTSTRAP_SYNC_ACCOUNTS !== 'true') return;
   const uri = process.env.MONGODB_URI;
   if (!uri) return;
@@ -54,25 +54,31 @@ async function syncBootstrapAccounts() {
     }
   ];
 
+  let created = 0;
   for (const account of accounts) {
     if (!account.email || !account.password) continue;
     const email = account.email.trim().toLowerCase();
-    const passwordHash = await bcrypt.hash(account.password, 12);
-    await User.findOneAndUpdate(
-      { email },
-      { $set: { name: account.name, email, passwordHash, role: account.role, active: true } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    const existing = await User.findOne({ email }).select('_id');
+    if (existing) continue;
+
+    await User.create({
+      name: account.name,
+      email,
+      passwordHash: await bcrypt.hash(account.password, 12),
+      role: account.role,
+      active: true
+    });
+    created += 1;
   }
 
   await mongoose.disconnect();
-  console.log('HearCare bootstrap accounts synchronized');
+  console.log(`HearCare bootstrap check complete (${created} account${created === 1 ? '' : 's'} created)`);
 }
 
 try {
-  await syncBootstrapAccounts();
+  await ensureBootstrapAccounts();
 } catch (err) {
-  console.error('Bootstrap account sync failed:', err.message);
+  console.error('Bootstrap account check failed:', err.message);
 }
 
 await import('./index.js');
