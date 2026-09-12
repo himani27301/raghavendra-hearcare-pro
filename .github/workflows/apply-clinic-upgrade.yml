@@ -1,0 +1,42 @@
+name: Apply Clinic Workflow Upgrade
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/apply-clinic-upgrade.cjs'
+      - '.github/workflows/apply-clinic-upgrade.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply upgrade patch
+        run: node scripts/apply-clinic-upgrade.cjs
+
+      - name: Commit upgraded clinic workflow
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No clinic changes needed"
+            exit 0
+          fi
+          git config user.name "HearCare Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add server/src/index.js web/app/page.js
+          git commit -m "Add doctor-specific schedules and staff password changes"
+          git push origin HEAD:main
