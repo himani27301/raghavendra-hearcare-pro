@@ -1,5 +1,6 @@
 name: Build Android APK
 
+# Release build for current HearCare clinic workflow.
 on:
   workflow_dispatch:
   push:
