@@ -103,13 +103,14 @@ function navFor(role) {
 function Shell({ session, onLogout }) {
   const [view, setView] = useState(session.user.role === 'patient' ? 'portal' : 'dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const allowed = navFor(session.user.role);
   return <div className="app-shell">
     <aside className={`sidebar ${mobileOpen ? 'open' : ''}`}>
       <div className="side-brand"><div className="ear-mark small"><Ear size={22}/></div><div><b>Raghavendra</b><span>Speech & Hearing Center</span></div></div>
       <nav>{allowed.map(([id,label,Icon]) => <button key={id} className={view===id?'active':''} onClick={() => { setView(id); setMobileOpen(false); }}><Icon size={18}/><span>{label}</span></button>)}</nav>
       <div className="clinic-meta"><ShieldCheck size={16}/><span>HearCare Pro<br/><small>{session.user.role === 'patient' ? 'Patient portal' : 'Clinic workspace'}</small></span></div>
-      <div className="side-bottom"><div className="user-mini"><div className="avatar">{session.user.name?.[0]}</div><div><b>{session.user.name}</b><span>{session.user.role}</span></div></div><button className="icon-btn" onClick={onLogout}><LogOut size={18}/></button></div>
+      <div className="side-bottom"><div className="user-mini"><div className="avatar">{session.user.name?.[0]}</div><div><b>{session.user.name}</b><span>{session.user.role}</span></div></div><div className="inline-actions">{session.user.role!=='patient'&&<button className="icon-btn" title="Change password" onClick={()=>setPasswordOpen(true)}><ShieldCheck size={17}/></button>}<button className="icon-btn" title="Sign out" onClick={onLogout}><LogOut size={18}/></button></div></div>
     </aside>
     <section className="main-area">
       <header className="topbar"><button className="menu" onClick={() => setMobileOpen(v => !v)}><Menu/></button><div className="top-title"><b>Raghavendra Speech and Hearing Center</b><span>A S Rao Nagar · Hyderabad</span></div><div className="top-actions"><span className="today-chip">{fullDate()}</span><button className="icon-btn"><Bell size={18}/></button><div className="avatar">{session.user.name?.[0]}</div></div></header>
@@ -125,7 +126,20 @@ function Shell({ session, onLogout }) {
         {view==='portal'&&<PatientPortal token={session.token}/>} 
       </div>
     </section>
+    {passwordOpen&&session.user.role!=='patient'&&<PasswordModal token={session.token} onClose={()=>setPasswordOpen(false)}/>}
   </div>;
+}
+
+function PasswordModal({ token, onClose }) {
+  const [currentPassword,setCurrentPassword]=useState(''),[newPassword,setNewPassword]=useState(''),[confirmPassword,setConfirmPassword]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
+  const save=async()=>{
+    if(newPassword!==confirmPassword){setError('New passwords do not match');return;}
+    if(newPassword.length<10){setError('Use at least 10 characters');return;}
+    setBusy(true);setError('');
+    try{await api('/auth/change-password',token,{method:'POST',body:JSON.stringify({currentPassword,newPassword})});alert('Password updated successfully');onClose();}
+    catch(e){setError(e.message);}finally{setBusy(false);}
+  };
+  return <Modal title="Change password" subtitle="Use a unique password for your clinic account" onClose={onClose}><div className="form-grid"><label className="span2">Current password<input type="password" autoComplete="current-password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)}/></label><label>New password<input type="password" autoComplete="new-password" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/></label><label>Confirm new password<input type="password" autoComplete="new-password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}/></label></div>{error&&<div className="error">{error}</div>}<button className="primary wide" disabled={busy} onClick={save}>{busy?'Updating…':'Update password'}</button></Modal>;
 }
 
 function Dashboard({ token, user, setView }) {

@@ -174,6 +174,20 @@ app.post('/api/auth/login', async (req, res) => {
   res.json({ token, user: { id: u.id, name: u.name, email: u.email, role: u.role, patientId: u.patientId || null } });
 });
 
+app.post('/api/auth/change-password', auth, allow('admin', 'doctor', 'receptionist'), async (req, res) => {
+  const currentPassword = String(req.body.currentPassword || '');
+  const newPassword = String(req.body.newPassword || '');
+  if (newPassword.length < 10) return res.status(400).json({ message: 'New password must be at least 10 characters' });
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).json({ message: 'Account not found' });
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash || '');
+  if (!valid) return res.status(401).json({ message: 'Current password is incorrect' });
+  user.passwordHash = await bcrypt.hash(newPassword, 12);
+  await user.save();
+  await audit(req, 'CHANGE_PASSWORD', 'User', user._id);
+  res.json({ ok: true, message: 'Password updated successfully' });
+});
+
 app.post('/api/auth/patient-login', async (req, res) => {
   const patientCode = String(req.body.patientCode || '').trim().toUpperCase();
   const phone = digits(req.body.phone);
@@ -233,7 +247,8 @@ app.get('/api/dashboard', auth, allow(...staffRoles), async (req, res) => {
   const today = dayKey();
   const month = monthKey();
   const [patients, appointments, payments, repairs, inventory] = await Promise.all([Patient.find(), Appointment.find().sort({ date: 1, time: 1 }), Payment.find(), Repair.find().sort({ dateReceived: -1 }), Inventory.find()]);
-  const todayApps = appointments.filter(a => dayKey(a.date) === today);
+  const visibleAppointments = req.user.role === 'doctor' ? appointments.filter(a => a.assignedDoctor === req.user.name) : appointments;
+  const todayApps = visibleAppointments.filter(a => dayKey(a.date) === today);
   const monthPays = payments.filter(p => monthKey(p.date || p.createdAt) === month);
   const pendingPays = payments.filter(p => Number(p.balance || 0) > 0);
   res.json({
@@ -286,13 +301,27 @@ app.post('/api/patients/:id/visits', auth, allow('admin', 'doctor'), async (req,
 app.post('/api/patients/:id/tests', auth, allow('admin', 'doctor'), async (req, res) => { const t = await HearingTest.create({ patientId: req.params.id, ...req.body }); await audit(req, 'CREATE', 'HearingTest', t._id); res.status(201).json(clean(t)); });
 app.post('/api/patients/:id/hearing-aids', auth, allow('admin', 'doctor'), async (req, res) => { const h = await HearingAid.create({ patientId: req.params.id, ...req.body }); await audit(req, 'CREATE', 'HearingAid', h._id); res.status(201).json(clean(h)); });
 
-app.get('/api/appointments', auth, allow(...staffRoles), async (req, res) => res.json(dbMode === 'mongodb' ? (await Appointment.find().sort({ date: 1, time: 1 })).map(clean) : memory.appointments));
+app.get('/api/appointments', auth, allow(...staffRoles), async (req, res) => {
+  if (dbMode !== 'mongodb') return res.json(memory.appointments);
+  const appointmentFilter = req.user.role === 'doctor' ? { assignedDoctor: req.user.name } : {};
+  const rows = await Appointment.find(appointmentFilter).sort({ date: 1, time: 1 });
+  res.json(rows.map(clean));
+});
 app.post('/api/appointments', auth, allow('admin', 'receptionist', 'doctor'), async (req, res) => {
   const p = await Patient.findById(req.body.patientId); if (!p) return res.status(404).json({ message: 'Patient not found' });
-  const a = await Appointment.create({ ...req.body, patientName: p.name, requestedBy: 'staff', status: req.body.status || 'Pending' });
+  const assignedDoctor = req.user.role === 'doctor' ? req.user.name : (req.body.assignedDoctor || '');
+  const a = await Appointment.create({ ...req.body, assignedDoctor, patientName: p.name, requestedBy: 'staff', status: req.body.status || 'Pending' });
   await audit(req, 'CREATE', 'Appointment', a._id); res.status(201).json(clean(a));
 });
-app.patch('/api/appointments/:id', auth, allow(...staffRoles), async (req, res) => { const a = await Appointment.findByIdAndUpdate(req.params.id, req.body, { new: true }); await audit(req, 'UPDATE', 'Appointment', req.params.id); res.json(clean(a)); });
+app.patch('/api/appointments/:id', auth, allow(...staffRoles), async (req, res) => {
+  const existing = await Appointment.findById(req.params.id);
+  if (!existing) return res.status(404).json({ message: 'Appointment not found' });
+  if (req.user.role === 'doctor' && existing.assignedDoctor && existing.assignedDoctor !== req.user.name) return res.status(403).json({ message: 'You can only update appointments assigned to you' });
+  const update = req.user.role === 'doctor' ? { ...req.body, assignedDoctor: req.user.name } : req.body;
+  const a = await Appointment.findByIdAndUpdate(req.params.id, update, { new: true });
+  await audit(req, 'UPDATE', 'Appointment', req.params.id);
+  res.json(clean(a));
+});
 
 app.get('/api/repairs', auth, allow(...staffRoles), async (req, res) => res.json(dbMode === 'mongodb' ? (await Repair.find().sort({ dateReceived: -1 })).map(clean) : memory.repairs));
 app.post('/api/repairs', auth, allow(...staffRoles), async (req, res) => { const p = await Patient.findById(req.body.patientId); if (!p) return res.status(404).json({ message: 'Patient not found' }); const r = await Repair.create({ ...req.body, patientName: p.name, phone: p.phone, status: 'Received' }); await audit(req, 'CREATE', 'Repair', r._id); res.status(201).json(clean(r)); });
