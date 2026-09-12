@@ -1,0 +1,65 @@
+name: Build Android Release Unsigned
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/android-release-unsigned.yml'
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_API_URL: https://raghavendra-hearcare-api.onrender.com/api
+      NEXT_PUBLIC_DEMO_MODE: 'false'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build web app
+        run: npm run build -w web
+
+      - name: Add Android project
+        run: npx cap add android
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build unsigned release APK
+        working-directory: android
+        run: ./gradlew assembleRelease
+
+      - name: Collect signing tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOLS_DIR="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          mkdir -p release-bundle/tools/lib
+          cp android/app/build/outputs/apk/release/app-release-unsigned.apk release-bundle/
+          cp "$TOOLS_DIR/apksigner" release-bundle/tools/
+          cp "$TOOLS_DIR/lib/apksigner.jar" release-bundle/tools/lib/
+          cp "$TOOLS_DIR/zipalign" release-bundle/tools/
+          chmod +x release-bundle/tools/apksigner release-bundle/tools/zipalign
+
+      - name: Upload unsigned release bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Raghavendra-HearCare-release-unsigned
+          path: release-bundle
+          retention-days: 7
