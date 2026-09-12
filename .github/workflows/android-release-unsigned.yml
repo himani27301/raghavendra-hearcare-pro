@@ -5,14 +5,13 @@ on:
   push:
     branches: [main]
     paths:
+      - 'patient-app/**'
+      - 'capacitor.config.ts'
       - '.github/workflows/android-release-unsigned.yml'
 
 jobs:
   build-release:
     runs-on: ubuntu-latest
-    env:
-      NEXT_PUBLIC_API_URL: https://raghavendra-hearcare-api.onrender.com/api
-      NEXT_PUBLIC_DEMO_MODE: 'false'
 
     steps:
       - name: Checkout
@@ -32,13 +31,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build web app
-        run: npm run build -w web
-
       - name: Add Android project
         run: npx cap add android
 
-      - name: Sync Capacitor
+      - name: Sync patient app
         run: npx cap sync android
 
       - name: Build unsigned release APK
@@ -60,6 +56,6 @@ jobs:
       - name: Upload unsigned release bundle
         uses: actions/upload-artifact@v4
         with:
-          name: Raghavendra-HearCare-release-unsigned
+          name: Raghavendra-HearCare-patient-release-unsigned
           path: release-bundle
           retention-days: 7
