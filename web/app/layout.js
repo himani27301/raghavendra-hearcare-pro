@@ -1,8 +1,9 @@
 import './globals.css';
+import './clinic.css';
 
 export const metadata = {
   title: 'HearCare Pro | Raghavendra Speech and Hearing Center',
-  description: 'Clinic management and patient portal for Raghavendra Speech and Hearing Center, Hyderabad',
+  description: 'Secure clinic operations workspace for Raghavendra Speech and Hearing Center, Hyderabad',
   manifest: '/manifest.webmanifest',
   icons: {
     icon: '/hearcare-icon.svg',
