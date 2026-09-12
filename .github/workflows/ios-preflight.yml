@@ -1,0 +1,50 @@
+name: iOS Preflight
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'capacitor.config.ts'
+      - 'package.json'
+      - '.github/workflows/ios-preflight.yml'
+
+jobs:
+  ios-preflight:
+    runs-on: macos-latest
+    env:
+      NEXT_PUBLIC_API_URL: https://raghavendra-hearcare-api.onrender.com/api
+      NEXT_PUBLIC_DEMO_MODE: 'false'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build web app
+        run: npm run build -w web
+
+      - name: Add iOS project
+        run: npx cap add ios
+
+      - name: Sync Capacitor
+        run: npx cap sync ios
+
+      - name: Build iOS simulator app
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
