@@ -1,0 +1,121 @@
+/* Production clinic UI polish: flatter, denser and intentionally non-marketing. */
+:root{
+  --ink:#17212b;
+  --muted:#687481;
+  --line:#dde3e8;
+  --bg:#f3f5f6;
+  --brand:#174f78;
+  --brand-dark:#103b5d;
+  --brand-soft:#edf3f7;
+  --gold:#dcae42;
+  --gold-soft:#fbf5e7;
+  --shadow:0 2px 8px rgba(18,37,52,.05);
+}
+html,body{background:#f3f5f6}
+
+/* Staff login: simple clinic software, not a marketing landing page. */
+.login-shell{grid-template-columns:minmax(380px,.82fr) minmax(480px,1.18fr);background:#f4f6f7}
+.login-brand{padding:48px 56px;background:#123f68!important;color:#fff;overflow:hidden}
+.login-brand:after{display:none!important}
+.official-badge{gap:12px}
+.official-badge strong{font-size:19px;letter-spacing:.055em}
+.official-badge span{font-size:12px;font-weight:600;color:#d9e7f0}
+.ear-mark{width:54px;height:54px;box-shadow:none;background:#e0b34b;color:#123f68}
+.hero-copy{max-width:480px}
+.hero-copy h1{font-size:37px;line-height:1.12;letter-spacing:-.025em;margin:12px 0 14px;font-weight:720}
+.hero-copy p{font-size:14px;line-height:1.65;color:#d9e7f0}
+.hero-pills{display:none}
+.login-foot{color:#bcd0dd;font-size:11px}
+.login-panel{background:#f4f6f7;padding:40px}
+.login-card{width:min(440px,100%);border-radius:14px;padding:30px;border:1px solid #dce2e7;box-shadow:0 8px 24px rgba(20,41,55,.07)}
+.login-card h2{font-size:25px;letter-spacing:-.02em;margin:5px 0}
+.login-card>div:first-child .muted{font-size:12px}
+.login-tabs{grid-template-columns:1fr;background:transparent;border:0;padding:0;margin:4px 0 0}
+.login-tabs button{display:none}
+.login-card>label{font-size:11px;margin-top:15px}
+.login-card input,.form-grid input,.form-grid select,.form-grid textarea,.repair-card select{border-radius:8px;padding:11px 12px;border-color:#cfd7de}
+.primary,.secondary{border-radius:8px;box-shadow:none}
+.primary{background:#174f78!important}
+.primary:hover{background:#103b5d!important}
+.secondary{background:#eef3f6;color:#174f78;border:1px solid #d7e0e6}
+.wide{padding:12px}
+
+/* Staff shell */
+.app-shell{grid-template-columns:238px 1fr}
+.sidebar{background:#123f68!important;padding:17px 13px}
+.side-brand{padding:3px 7px 18px;border-bottom:1px solid rgba(255,255,255,.09);margin-bottom:12px}
+.side-brand .ear-mark.small{width:36px;height:36px;background:#dcae42!important;box-shadow:none}
+.side-brand b{font-size:13px!important;font-weight:750}
+.side-brand span{font-size:9px!important}
+.sidebar nav{gap:2px}
+.sidebar nav button{border-radius:7px;padding:10px 11px;font-size:12px}
+.sidebar nav button.active{background:#0e3557!important;box-shadow:inset 3px 0 0 #dcae42!important}
+.clinic-meta{border-radius:8px!important;background:rgba(255,255,255,.045)!important}
+.avatar{background:#e8edf1;color:#174f78;border-radius:9px}
+.sidebar .avatar{background:#dcae42!important;border-radius:9px!important;color:#123f68!important}
+.topbar{height:64px;background:#fff;backdrop-filter:none;border-color:#dde3e8;padding:0 25px}
+.top-title b{font-size:13px}
+.top-title span{font-size:9px}
+.today-chip{background:#fff;border-radius:7px;padding:7px 9px}
+.content{padding:24px 28px;max-width:1500px}
+
+/* Dashboard: denser, operational, no decorative bubbles/gradients. */
+.dashboard-hero{padding:2px 0 16px;align-items:center}
+.dashboard-hero h1,.page-head h1{font-size:26px;letter-spacing:-.025em;margin:5px 0}
+.dashboard-hero p,.page-head p{font-size:12px}
+.eyebrow{font-size:9px;letter-spacing:.11em;color:#51728a}
+.quick-search{border-radius:10px;background:#fff;box-shadow:none;padding:13px 15px;border-color:#dce3e8;margin-bottom:14px}
+.metric-grid{gap:10px;margin-bottom:16px}
+.metric{border-radius:10px;min-height:126px;padding:15px;box-shadow:none}
+.metric:after{display:none}
+.metric-icon{width:34px;height:34px;border-radius:8px;margin-bottom:14px;background:#edf3f7;color:#174f78}
+.metric>span{font-size:10px}
+.metric>b{font-size:21px;margin:5px 0}
+.metric small{font-size:9px}
+.metric.clickable{transition:border-color .15s ease,background .15s ease}
+.metric.clickable:hover{transform:none;box-shadow:none;border-color:#b9c9d5;background:#fbfcfd}
+.card{border-radius:10px;box-shadow:none}
+.card-head{padding:15px 17px}
+.card-head h3,.section-title h3,.drawer-block h3{font-size:14px}
+.card-head p,.section-title p{font-size:10px}
+.row{padding:12px 3px}
+.circle{border-radius:8px;background:#edf3f7;color:#174f78}
+.status{border-radius:5px;padding:5px 7px}
+
+/* Tables/forms feel like real practice-management software. */
+.page-head{margin-bottom:18px;align-items:center}
+.search{padding:13px 15px}
+table{min-width:820px}
+th{padding:10px 15px;background:#f7f8f9;color:#6f7b86;font-size:8px;letter-spacing:.08em}
+td{padding:12px 15px;font-size:11px}
+tbody tr:hover{background:#f8fafb}
+.code-pill{border-radius:5px;background:#eef2f4;padding:5px 7px}
+.drawer{width:min(720px,100%);padding:0 25px 30px;box-shadow:-8px 0 30px rgba(17,35,48,.12)}
+.patient-hero{padding-bottom:17px}
+.avatar.xl{border-radius:12px}
+.mini-stats{gap:7px;margin:14px 0}
+.mini-stats div{border-radius:8px;background:#f7f8f9}
+.modal{border-radius:12px;padding:22px;box-shadow:0 14px 42px rgba(15,31,44,.2)}
+.repair-board{gap:9px}
+.repair-col{background:#e9edf0;border-radius:9px;padding:9px}
+.repair-card{border-radius:8px;box-shadow:none}
+.summary-strip{gap:9px}
+.summary-strip>div{border-radius:9px;padding:15px}
+.inventory-grid{gap:10px}
+.inventory-card{border-radius:9px}
+.followup-grid{gap:10px}
+.followup-card{border-radius:9px;box-shadow:none;padding:15px}
+.team-grid{gap:10px}
+.team-card{border-radius:9px;box-shadow:none;padding:15px}
+.contact-btn{border-radius:7px}
+
+/* Patient portal is still available for testing, but patient-facing distribution is the native app. */
+.portal-hero{border-radius:12px;background:#123f68}
+.portal-service-strip{border-radius:10px}
+.service-chips span{border-radius:6px}
+
+@media(max-width:800px){
+  .login-panel{padding:22px;background:#f4f6f7}
+  .login-card{border-radius:12px;padding:24px}
+  .content{padding:18px}
+}
