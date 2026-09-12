@@ -6,6 +6,7 @@ import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -194,6 +195,37 @@ app.get('/api/doctors', auth, async (req, res) => {
 app.get('/api/staff', auth, allow('admin'), async (req, res) => {
   const rows = await User.find({ role: { $in: ['admin', 'doctor', 'receptionist'] } }).select('name email role active createdAt').sort({ role: 1, name: 1 });
   res.json(rows.map(clean));
+});
+
+const defaultStaff = [
+  { name: 'Dr. Sarala', email: 'dr.sarala@raghavendrahearing.local', role: 'doctor' },
+  { name: 'Dr. Suresh Naidu', email: 'dr.suresh@raghavendrahearing.local', role: 'doctor' },
+  { name: 'Reception', email: 'reception@raghavendrahearing.local', role: 'receptionist' }
+];
+const temporaryPassword = () => `HC-${crypto.randomBytes(7).toString('base64url')}`;
+
+app.post('/api/staff/bootstrap-defaults', auth, allow('admin'), async (req, res) => {
+  const created = [];
+  for (const row of defaultStaff) {
+    const existing = await User.findOne({ email: row.email });
+    if (existing) continue;
+    const password = temporaryPassword();
+    const user = await User.create({ ...row, passwordHash: await bcrypt.hash(password, 12), active: true });
+    created.push({ id: String(user._id), name: row.name, email: row.email, role: row.role, password });
+  }
+  await audit(req, 'CREATE', 'DefaultStaff', created.map(x => x.id).join(','));
+  res.json({ created, message: created.length ? 'Staff logins created. Save these temporary passwords now.' : 'All default staff accounts already exist.' });
+});
+
+app.post('/api/staff/:id/reset-password', auth, allow('admin'), async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user || !['doctor', 'receptionist'].includes(user.role)) return res.status(404).json({ message: 'Staff account not found' });
+  const password = temporaryPassword();
+  user.passwordHash = await bcrypt.hash(password, 12);
+  user.active = true;
+  await user.save();
+  await audit(req, 'RESET_PASSWORD', 'User', user._id);
+  res.json({ id: String(user._id), name: user.name, email: user.email, password });
 });
 
 app.get('/api/dashboard', auth, allow(...staffRoles), async (req, res) => {
