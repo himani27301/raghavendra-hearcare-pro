@@ -8,13 +8,24 @@ export const metadata = {
     icon: '/hearcare-icon.svg',
     apple: '/hearcare-icon.svg'
   },
-  applicationName: 'Raghavendra HearCare Pro'
+  applicationName: 'Raghavendra HearCare Pro',
+  appleWebApp: {
+    capable: true,
+    title: 'HearCare Pro',
+    statusBarStyle: 'default'
+  },
+  formatDetection: {
+    telephone: true,
+    email: true,
+    address: false
+  }
 };
 
 export const viewport = {
   themeColor: '#123f68',
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
   viewportFit: 'cover'
 };
 
