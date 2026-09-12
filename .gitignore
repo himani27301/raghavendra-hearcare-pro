@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.env
+server/.env
+web/.env.local
+.DS_Store
+*.log
+android/
+dist/
