@@ -20,6 +20,6 @@
     "@capacitor/core": "^7.4.0",
     "@capacitor/android": "^7.4.0",
     "@capacitor/ios": "^7.4.0",
-    "typescript": "^5.9.2"
+    "typescript": "^7.0.2"
   }
 }
